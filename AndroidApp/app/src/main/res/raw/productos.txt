@@ -1,0 +1,40 @@
+1. Martillo
+2. Destornillador
+3. Clavos
+4. Tornillos
+5. Llave inglesa
+6. Llave de tubo
+7. Alicates
+8. Cinta métrica
+9. Sierra
+10. Taladro
+11. Brocas
+12. Escalera
+13. Nivel de burbuja
+14. Pegamento
+15. Cepillo metálico
+16. Lija
+17. Pintura
+18. Cautín
+19. Cadenas
+20. Tuercas
+21. Remaches
+22. Escuadra
+23. Martillo de goma
+24. Espátula
+25. Destornillador eléctrico
+26. Guantes de trabajo
+27. Tornillo de banco
+28. Caja de herramientas
+29. Sierra caladora
+30. Manguera de jardín
+31. Brocha
+32. Llave ajustable
+33. Grapas
+34. Cizalla
+35. Llave de vaso
+36. Llave de impacto
+37. Pala
+38. Alicate de corte
+39. Destornillador de precisión
+40. Serrucho

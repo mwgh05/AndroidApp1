@@ -3,9 +3,14 @@ package com.example.myapplication.archivos;
 import android.content.Context;
 
 import com.example.myapplication.Producto.Producto;
+import com.example.myapplication.R;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
@@ -44,6 +49,24 @@ public class Controlador {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+        return productos;
+    }
+
+    public ArrayList<String> leerProductos() {
+        ArrayList<String> productos = new ArrayList<>();
+
+        try (InputStream raw = context.getResources().openRawResource(R.raw.productos);
+             BufferedReader br = new BufferedReader(new InputStreamReader(raw))) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                // Elimina el número y el punto al principio de cada línea
+                String producto = linea.substring(linea.indexOf(' ') + 1).trim();
+                productos.add(producto);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return productos;
     }
 }

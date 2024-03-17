@@ -7,8 +7,12 @@ import android.location.Location;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import com.example.myapplication.Producto.Producto;
+import com.example.myapplication.archivos.Controlador;
 import com.google.android.gms.maps.model.LatLngBounds;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,12 +49,15 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
 
 import android.util.Log;
 
@@ -63,6 +70,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final String TAG = "MapsActivity";
     private PlacesClient placesClient;
+    private ArrayList<String> productos=new ArrayList<>();
+    private ArrayList<Marker> markers = new ArrayList<>();
+    TextInputEditText texto;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +108,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivity(intent);
             }
         });
+        texto=findViewById(R.id.texto);
+        ImageButton botonBuscar = findViewById(R.id.buscar);
+        botonBuscar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buscarProducto();
+            }
+        });
     }
 
     private void getLastLocation() {
@@ -127,62 +146,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         //9.856402696232688, -83.91262816484455
-        // Verificar si currentLocation no es null
         if (currentLocation != null) {
             LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Mi Ubicación").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 13)); // Ajustar el zoom según sea necesario
-
-            // Realizar la búsqueda de ferreterías cercanas
             findNearbyHardwareStores();
+            //verificarProductosAsignados();
         }
     }
 
     // Método para realizar la búsqueda de ferreterías cercanas
-    // Método para realizar la búsqueda de ferreterías cercanas
     private void findNearbyHardwareStores() {
-        // Define el radio de búsqueda en metros
         int radiusMeters = 5000;
-        // Define la palabra clave a buscar
         String keyword = "ferretería";
-        // Define tu clave de API de Google Places
         String apiKey = "AIzaSyDckEpSeNCLbBMdkGpCwIGX5o3eHJ21sMU";
-
-        // Crea la URL de la API de Google Places Nearby Search
         String urlString = String.format(Locale.US,
                 "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%f,%f&radius=%d&keyword=%s&key=%s",
                 currentLocation.getLatitude(), currentLocation.getLongitude(), radiusMeters, keyword, apiKey);
 
-        // Crea un nuevo hilo para realizar la solicitud HTTP
         new Thread(() -> {
             try {
-                // Crea la conexión HTTP
                 URL url = new URL(urlString);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.connect();
 
-                // Lee la respuesta
                 InputStream in = new BufferedInputStream(conn.getInputStream());
                 String response = readStream(in);
 
-                // Parsea la respuesta JSON
                 JSONObject jsonObject = new JSONObject(response);
                 JSONArray results = jsonObject.getJSONArray("results");
                 for (int i = 0; i < results.length(); i++) {
                     JSONObject result = results.getJSONObject(i);
+                    result.put("productos", asignarProductos());
                     String placeName = result.getString("name");
                     JSONObject location = result.getJSONObject("geometry").getJSONObject("location");
                     double lat = location.getDouble("lat");
                     double lng = location.getDouble("lng");
 
-                    // Agrega un marcador al mapa en el hilo principal
                     runOnUiThread(() -> {
                         LatLng latLng = new LatLng(lat, lng);
                         Marker marker = mMap.addMarker(new MarkerOptions()
                                 .position(latLng)
                                 .title(placeName));
-                        marker.showInfoWindow(); // Muestra el nombre del lugar en el marcador
+                        assert marker != null;
+                        marker.setTag(result);
+                        markers.add(marker);
+                        marker.showInfoWindow();
                     });
                 }
             } catch (Exception e) {
@@ -190,6 +200,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }).start();
     }
+
 
     private String readStream(InputStream in) throws IOException {
         StringBuilder sb = new StringBuilder();
@@ -202,6 +213,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    private JSONArray asignarProductos(){
+        Controlador controlador = new Controlador(this);
+        productos = controlador.leerProductos();
+        if(!productos.isEmpty()) {
+            ArrayList<String> seleccionados = new ArrayList<>();
+            for (int i = 0; i < 20 && !productos.isEmpty(); i++) {
+                Random x = new Random();
+                int num = x.nextInt(productos.size());
+                seleccionados.add(productos.remove(num));
+            }
+            return new JSONArray(seleccionados);
+        }else{
+            return new JSONArray();
+        }
+    }
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -210,6 +238,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 getLastLocation();
             } else {
                 Toast.makeText(this, "Permiso denegado. Por favor acepte el permiso.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+
+    private void buscarProducto(){
+        try {
+            Controlador controlador = new Controlador(this);
+            productos = controlador.leerProductos();
+            String producto = texto.getText().toString().trim();
+            if(!productos.isEmpty()) {
+                Toast.makeText(this, "Buscando producto...", Toast.LENGTH_SHORT).show();
+            }
+            if(productos.contains(producto)) {
+                for (Marker marker : markers) {
+                    JSONObject ferreteria = (JSONObject) marker.getTag();
+                    if (ferreteria != null) {
+                        JSONArray productosFerreteria = ferreteria.optJSONArray("productos");
+                        if (productosFerreteria != null) {
+                            for (int i = 0; i < productosFerreteria.length(); i++) {
+                                if (productosFerreteria.optString(i).equals(producto)) {
+                                    marker.setVisible(true);
+                                    break;
+                                } else {
+                                    marker.setVisible(false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }else{
+                Toast.makeText(this, "No se encuentra el producto.", Toast.LENGTH_SHORT).show();
+                for (Marker marker : markers) {
+                    marker.setVisible(true);
+                }
+            }
+        }catch(Exception e){
+            Toast.makeText(this, "No se encuentra el producto!", Toast.LENGTH_SHORT).show();
+            for (Marker marker : markers) {
+                marker.setVisible(true);
             }
         }
     }
