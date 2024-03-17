@@ -130,8 +130,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Verificar si currentLocation no es null
         if (currentLocation != null) {
             LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Mi Ubicación"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12)); // Ajustar el zoom según sea necesario
+            mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Mi Ubicación").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 13)); // Ajustar el zoom según sea necesario
 
             // Realizar la búsqueda de ferreterías cercanas
             findNearbyHardwareStores();
